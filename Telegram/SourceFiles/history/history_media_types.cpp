@@ -3073,18 +3073,15 @@ QString siteNameFromUrl(const QString &url) {
 }
 
 int32 articleThumbWidth(PhotoData *thumb, int32 height) {
-	return 0;
 	int32 w = thumb->medium->width(), h = thumb->medium->height();
 	return qMax(qMin(height * w / h, height), 1);
 }
 
 int32 articleThumbHeight(PhotoData *thumb, int32 width) {
-	return 0;
 	return qMax(thumb->medium->height() * width / thumb->medium->width(), 1);
 }
 
 int unitedLineHeight() {
-	return 0;
 	return qMax(st::webPageTitleFont->height, st::webPageDescriptionFont->height);
 }
 
@@ -3094,6 +3091,7 @@ HistoryWebPage::HistoryWebPage(HistoryItem *parent, WebPageData *data) : History
 , _data(data)
 , _title(st::msgMinWidth - st::webPageLeft)
 , _description(st::msgMinWidth - st::webPageLeft) {
+
 }
 
 HistoryWebPage::HistoryWebPage(HistoryItem *parent, const HistoryWebPage &other) : HistoryMedia(parent)
@@ -3106,14 +3104,17 @@ HistoryWebPage::HistoryWebPage(HistoryItem *parent, const HistoryWebPage &other)
 , _durationWidth(other._durationWidth)
 , _pixw(other._pixw)
 , _pixh(other._pixh) {
+
 }
 
 void HistoryWebPage::initDimensions() {
-	return;
+	bool isDisabled = true;
+
 	if (_data->pendingTill) {
 		_maxw = _minh = _height = 0;
 		return;
 	}
+
 	auto lineHeight = unitedLineHeight();
 
 	if (!_openl && !_data->url.isEmpty()) {
@@ -3121,67 +3122,69 @@ void HistoryWebPage::initDimensions() {
 	}
 
 	// init layout
-	auto title = textOneLine(_data->title.isEmpty() ? _data->author : _data->title);
-	if (!_data->description.isEmpty() && title.isEmpty() && _data->siteName.isEmpty() && !_data->url.isEmpty()) {
-		_data->siteName = siteNameFromUrl(_data->url);
-	}
-	if (!_data->document && _data->photo && _data->type != WebPagePhoto && _data->type != WebPageVideo) {
-		if (_data->type == WebPageProfile) {
-			_asArticle = true;
-		} else if (_data->siteName == qstr("Twitter") || _data->siteName == qstr("Facebook")) {
-			_asArticle = false;
-		} else {
-			_asArticle = true;
+	if (!isDisabled)
+	{
+		auto title = textOneLine(_data->title.isEmpty() ? _data->author : _data->title);
+		if (!_data->description.isEmpty() && title.isEmpty() && _data->siteName.isEmpty() && !_data->url.isEmpty()) {
+			_data->siteName = siteNameFromUrl(_data->url);
 		}
-		if (_asArticle && _data->description.isEmpty() && title.isEmpty() && _data->siteName.isEmpty()) {
-			_asArticle = false;
-		}
-	} else {
-		_asArticle = false;
-	}
-
-	// init attach
-	if (!_asArticle && !_attach) {
-		if (_data->document) {
-			if (_data->document->sticker()) {
-				_attach = std::make_unique<HistorySticker>(_parent, _data->document);
-			} else if (_data->document->isAnimation()) {
-				_attach = std::make_unique<HistoryGif>(_parent, _data->document, QString());
-			} else if (_data->document->isVideo()) {
-				_attach = std::make_unique<HistoryVideo>(_parent, _data->document, QString());
+		if (!_data->document && _data->photo && _data->type != WebPagePhoto && _data->type != WebPageVideo) {
+			if (_data->type == WebPageProfile) {
+				_asArticle = true;
+			} else if (_data->siteName == qstr("Twitter") || _data->siteName == qstr("Facebook")) {
+				_asArticle = false;
 			} else {
-				_attach = std::make_unique<HistoryDocument>(_parent, _data->document, QString());
+				_asArticle = true;
 			}
-		} else if (_data->photo) {
-			_attach = std::make_unique<HistoryPhoto>(_parent, _data->photo, QString());
+			if (_asArticle && _data->description.isEmpty() && title.isEmpty() && _data->siteName.isEmpty()) {
+				_asArticle = false;
+			}
+		} else {
+			_asArticle = false;
 		}
-	}
 
-	// init strings
-	if (_description.isEmpty() && !_data->description.isEmpty()) {
-		auto text = _data->description;
-
+		// init attach
 		if (!_asArticle && !_attach) {
-			text += _parent->skipBlock();
+			if (_data->document) {
+				if (_data->document->sticker()) {
+					_attach = std::make_unique<HistorySticker>(_parent, _data->document);
+				} else if (_data->document->isAnimation()) {
+					_attach = std::make_unique<HistoryGif>(_parent, _data->document, QString());
+				} else if (_data->document->isVideo()) {
+					_attach = std::make_unique<HistoryVideo>(_parent, _data->document, QString());
+				} else {
+					_attach = std::make_unique<HistoryDocument>(_parent, _data->document, QString());
+				}
+			} else if (_data->photo) {
+				_attach = std::make_unique<HistoryPhoto>(_parent, _data->photo, QString());
+			}
 		}
-		const TextParseOptions *opts = &_webpageDescriptionOptions;
-		if (_data->siteName == qstr("Twitter")) {
-			opts = &_twitterDescriptionOptions;
-		} else if (_data->siteName == qstr("Instagram")) {
-			opts = &_instagramDescriptionOptions;
-		}
-		_description.setText(st::webPageDescriptionStyle, text, *opts);
-	}
-	if (_title.isEmpty() && !title.isEmpty()) {
-		if (!_asArticle && !_attach && _description.isEmpty()) {
-			title += _parent->skipBlock();
-		}
-		_title.setText(st::webPageTitleStyle, title, _webpageTitleOptions);
-	}
-	if (!_siteNameWidth && !_data->siteName.isEmpty()) {
-		_siteNameWidth = st::webPageTitleFont->width(_data->siteName);
-	}
 
+		// init strings
+		if (_description.isEmpty() && !_data->description.isEmpty()) {
+			auto text = _data->description;
+
+			if (!_asArticle && !_attach) {
+				text += _parent->skipBlock();
+			}
+			const TextParseOptions *opts = &_webpageDescriptionOptions;
+			if (_data->siteName == qstr("Twitter")) {
+				opts = &_twitterDescriptionOptions;
+			} else if (_data->siteName == qstr("Instagram")) {
+				opts = &_instagramDescriptionOptions;
+			}
+			_description.setText(st::webPageDescriptionStyle, text, *opts);
+		}
+		if (_title.isEmpty() && !title.isEmpty()) {
+			if (!_asArticle && !_attach && _description.isEmpty()) {
+				title += _parent->skipBlock();
+			}
+			_title.setText(st::webPageTitleStyle, title, _webpageTitleOptions);
+		}
+		if (!_siteNameWidth && !_data->siteName.isEmpty()) {
+			_siteNameWidth = st::webPageTitleFont->width(_data->siteName);
+		}
+	}
 	// init dimensions
 	int32 l = st::msgPadding.left() + st::webPageLeft, r = st::msgPadding.right();
 	int32 skipBlockWidth = _parent->skipBlockWidth();
@@ -3194,57 +3197,65 @@ void HistoryWebPage::initDimensions() {
 	int32 descriptionMinHeight = _description.isEmpty() ? 0 : qMin(_description.minHeight(), descMaxLines * lineHeight);
 	int32 articleMinHeight = siteNameHeight + titleMinHeight + descriptionMinHeight;
 	int32 articlePhotoMaxWidth = 0;
-	if (_asArticle) {
-		articlePhotoMaxWidth = st::webPagePhotoDelta + qMax(articleThumbWidth(_data->photo, articleMinHeight), lineHeight);
-	}
 
-	if (_siteNameWidth) {
-		if (_title.isEmpty() && _description.isEmpty()) {
-			accumulate_max(_maxw, _siteNameWidth + _parent->skipBlockWidth());
-		} else {
-			accumulate_max(_maxw, _siteNameWidth + articlePhotoMaxWidth);
+	if (!isDisabled)
+	{
+		if (_asArticle) {
+			articlePhotoMaxWidth = st::webPagePhotoDelta + qMax(articleThumbWidth(_data->photo, articleMinHeight), lineHeight);
 		}
-		_minh += lineHeight;
-	}
-	if (!_title.isEmpty()) {
-		accumulate_max(_maxw, _title.maxWidth() + articlePhotoMaxWidth);
-		_minh += titleMinHeight;
-	}
-	if (!_description.isEmpty()) {
-		accumulate_max(_maxw, _description.maxWidth() + articlePhotoMaxWidth);
-		_minh += descriptionMinHeight;
-	}
-	if (_attach) {
-		auto attachAtTop = !_siteNameWidth && _title.isEmpty() && _description.isEmpty();
-		if (!attachAtTop) _minh += st::mediaInBubbleSkip;
 
-		_attach->initDimensions();
-		QMargins bubble(_attach->bubbleMargins());
-		auto maxMediaWidth = _attach->maxWidth() - bubble.left() - bubble.right();
-		if (isBubbleBottom() && _attach->customInfoLayout()) {
-			maxMediaWidth += skipBlockWidth;
+		if (_siteNameWidth) {
+			if (_title.isEmpty() && _description.isEmpty()) {
+				accumulate_max(_maxw, _siteNameWidth + _parent->skipBlockWidth());
+			}
+			else {
+				accumulate_max(_maxw, _siteNameWidth + articlePhotoMaxWidth);
+			}
+			_minh += lineHeight;
 		}
-		accumulate_max(_maxw, maxMediaWidth);
-		_minh += _attach->minHeight() - bubble.top() - bubble.bottom();
-		if (!_attach->additionalInfoString().isEmpty()) {
-			_minh += bottomInfoPadding();
+		if (!_title.isEmpty()) {
+			accumulate_max(_maxw, _title.maxWidth() + articlePhotoMaxWidth);
+			_minh += titleMinHeight;
 		}
-	}
-	if (_data->type == WebPageVideo && _data->duration) {
-		_duration = formatDurationText(_data->duration);
-		_durationWidth = st::msgDateFont->width(_duration);
+		if (!_description.isEmpty()) {
+			accumulate_max(_maxw, _description.maxWidth() + articlePhotoMaxWidth);
+			_minh += descriptionMinHeight;
+		}
+
+		if (_attach) {
+			auto attachAtTop = !_siteNameWidth && _title.isEmpty() && _description.isEmpty();
+			if (!attachAtTop) _minh += st::mediaInBubbleSkip;
+
+			_attach->initDimensions();
+			QMargins bubble(_attach->bubbleMargins());
+			auto maxMediaWidth = _attach->maxWidth() - bubble.left() - bubble.right();
+			if (isBubbleBottom() && _attach->customInfoLayout()) {
+				maxMediaWidth += skipBlockWidth;
+			}
+			accumulate_max(_maxw, maxMediaWidth);
+			_minh += _attach->minHeight() - bubble.top() - bubble.bottom();
+			if (!_attach->additionalInfoString().isEmpty()) {
+				_minh += bottomInfoPadding();
+			}
+		}
+		if (_data->type == WebPageVideo && _data->duration) {
+			_duration = formatDurationText(_data->duration);
+			_durationWidth = st::msgDateFont->width(_duration);
+		}
 	}
 	_maxw += st::msgPadding.left() + st::webPageLeft + st::msgPadding.right();
 	auto padding = inBubblePadding();
 	_minh += padding.top() + padding.bottom();
 
-	if (_asArticle) {
-		_minh = resizeGetHeight(_maxw);
+	if (!isDisabled)
+	{
+		if (_asArticle) {
+			_minh = resizeGetHeight(_maxw);
+		}
 	}
 }
 
 int HistoryWebPage::resizeGetHeight(int width) {
-	return 0;
 	if (_data->pendingTill) {
 		_width = width;
 		_height = _minh;
@@ -3340,7 +3351,6 @@ int HistoryWebPage::resizeGetHeight(int width) {
 }
 
 void HistoryWebPage::draw(Painter &p, const QRect &r, TextSelection selection, TimeMs ms) const {
-	return;
 	if (_width < st::msgPadding.left() + st::msgPadding.right() + 1) return;
 	int32 skipx = 0, skipy = 0, width = _width, height = _height;
 
@@ -3590,12 +3600,10 @@ TextWithEntities HistoryWebPage::selectedText(TextSelection selection) const {
 }
 
 bool HistoryWebPage::hasReplyPreview() const {
-	return false;
 	return _attach ? _attach->hasReplyPreview() : (_data->photo ? true : false);
 }
 
 ImagePtr HistoryWebPage::replyPreview() {
-	return ImagePtr();
 	return _attach ? _attach->replyPreview() : (_data->photo ? _data->photo->makeReplyPreview() : ImagePtr());
 }
 
