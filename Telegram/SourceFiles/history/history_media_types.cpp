@@ -3073,15 +3073,18 @@ QString siteNameFromUrl(const QString &url) {
 }
 
 int32 articleThumbWidth(PhotoData *thumb, int32 height) {
+	return 0;
 	int32 w = thumb->medium->width(), h = thumb->medium->height();
 	return qMax(qMin(height * w / h, height), 1);
 }
 
 int32 articleThumbHeight(PhotoData *thumb, int32 width) {
+	return 0;
 	return qMax(thumb->medium->height() * width / thumb->medium->width(), 1);
 }
 
 int unitedLineHeight() {
+	return 0;
 	return qMax(st::webPageTitleFont->height, st::webPageDescriptionFont->height);
 }
 
@@ -3106,6 +3109,7 @@ HistoryWebPage::HistoryWebPage(HistoryItem *parent, const HistoryWebPage &other)
 }
 
 void HistoryWebPage::initDimensions() {
+	return;
 	if (_data->pendingTill) {
 		_maxw = _minh = _height = 0;
 		return;
@@ -3240,6 +3244,7 @@ void HistoryWebPage::initDimensions() {
 }
 
 int HistoryWebPage::resizeGetHeight(int width) {
+	return 0;
 	if (_data->pendingTill) {
 		_width = width;
 		_height = _minh;
@@ -3335,6 +3340,7 @@ int HistoryWebPage::resizeGetHeight(int width) {
 }
 
 void HistoryWebPage::draw(Painter &p, const QRect &r, TextSelection selection, TimeMs ms) const {
+	return;
 	if (_width < st::msgPadding.left() + st::msgPadding.right() + 1) return;
 	int32 skipx = 0, skipy = 0, width = _width, height = _height;
 
@@ -3584,10 +3590,12 @@ TextWithEntities HistoryWebPage::selectedText(TextSelection selection) const {
 }
 
 bool HistoryWebPage::hasReplyPreview() const {
+	return false;
 	return _attach ? _attach->hasReplyPreview() : (_data->photo ? true : false);
 }
 
 ImagePtr HistoryWebPage::replyPreview() {
+	return ImagePtr();
 	return _attach ? _attach->replyPreview() : (_data->photo ? _data->photo->makeReplyPreview() : ImagePtr());
 }
 
